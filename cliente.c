@@ -14,10 +14,18 @@
 #include <string.h>
 #include <unistd.h>
 
+#include <pthread.h>
+
+
 #define SERV_TCP_PORT  5555
 #define MAXLINE 512
 
+char line[MAXLINE];
+
 char sendline[MAXLINE];
+
+pthread_t trd_1;
+
 
 digitaAlgo(int sockfd) {
    int  n;
@@ -31,6 +39,20 @@ digitaAlgo(int sockfd) {
        exit(3);
      }
    }
+}
+
+void *readClientSocket(void *newsockfd){
+    int teste = *((int *)newsockfd);
+    while (1)
+    {
+        int n = read(teste, line, MAXLINE);
+        
+        printf("Recebi=%s\n",line);
+        bzero(line, sizeof(line));
+        
+    }
+    
+
 }
 
 
@@ -71,8 +93,16 @@ int main(argc, argv)
     }
   printf("\nOK!\n");
 
+  int result;
+  struct sockaddr_in  cli_addr;
+
+  int clilen = sizeof(cli_addr);
+
+  int newsockfd = accept(sockfd, (struct sockaddr *) &cli_addr, &clilen);
+
+  result = pthread_create(&trd_1, NULL, readClientSocket, &newsockfd);
+
+
   digitaAlgo(sockfd);
   close(sockfd);
 }
-
-

@@ -7,6 +7,10 @@
 #include <netdb.h>
 #include <string.h>
 #include <unistd.h>
+#include <stdint.h>
+
+#include <pthread.h>
+
 
 #define SERV_TCP_PORT  5555
 
@@ -15,52 +19,94 @@
 char line[MAXLINE];
 char *IP;
 
+pthread_t trd_1;
 
-int main(int argc, char *argv[]) {
-   int                 sockfd, newsockfd, clilen, n;
-   struct sockaddr_in  cli_addr, serv_addr;
-   struct hostent      *hp;
+char sendline[MAXLINE];
 
-  /* open a TCP socket */
-  if ((sockfd = socket(AF_INET, SOCK_STREAM, 0)) <0 )
-  {
-      printf("server: can not open stream socket\n");
-      exit(1);
-  }
+int clients[100], cur_pos = 0;
 
-  /* bind our local address so that the client can send to us */
-  bzero((char *) &serv_addr, sizeof(serv_addr));
-  serv_addr.sin_family      = AF_INET;
-  serv_addr.sin_addr.s_addr = htonl(INADDR_ANY);
-  serv_addr.sin_port        = htons(SERV_TCP_PORT);
-
-  if (bind(sockfd, (struct sockaddr *)&serv_addr, sizeof(serv_addr))<0)
-  {
-     printf("server: can not bind local addr\n");
-     exit(2);
-  }
-
-  listen(sockfd, 5);
-  printf ("Servidor aguardando conexao\n");
-
-    clilen = sizeof(cli_addr);
-    newsockfd = accept(sockfd, (struct sockaddr *) &cli_addr, &clilen);
-
-    if( newsockfd < 0)
+void *readClientSocket(void *newsockfd){
+    int teste = *((int *)newsockfd);
+    while (1)
     {
-     /*err_dump("server: accept error");*/
-       printf("server: accept error\n");
-       exit(3);
+        int n = read(teste, line, MAXLINE);
+        if (n == 0) exit(3);                     /* connection terminated */
+        else if (n < 0)
+        printf("str_echo: read err\n");
+        printf("Recebi=%s\n",line);
+        bzero(line, sizeof(line));
+
+        for(int i = 0; i < cur_pos; i++ ){
+        
+            write(clients[i], line, strlen(line));
+        }
     }
+    
 
-    IP = inet_ntoa(cli_addr.sin_addr);
-    printf("Cliente conectado --> IP: %s\n",IP);
-
-    n = read(newsockfd, line, MAXLINE);
-    if (n == 0) exit(3);                     /* connection terminated */
-    else if (n < 0)
-      printf("str_echo: read err\n");
-    printf("Recebi=%s\n",line);
-//    Return(0);
 }
 
+void sendClientSocket(char send){
+    int n;
+    
+    
+
+}
+
+int main(int argc, char *argv[]) {
+   int                 sockfd, clilen, n;
+   int newsockfd;
+   struct sockaddr_in  cli_addr, serv_addr;
+   struct hostent      *hp;
+    
+        /* open a TCP socket */
+        if ((sockfd = socket(AF_INET, SOCK_STREAM, 0)) <0 )
+        {
+            printf("server: can not open stream socket\n");
+            exit(1);
+        }
+
+        /* bind our local address so that the client can send to us */
+        bzero((char *) &serv_addr, sizeof(serv_addr));
+        serv_addr.sin_family      = AF_INET;
+        serv_addr.sin_addr.s_addr = htonl(INADDR_ANY);
+        serv_addr.sin_port        = htons(SERV_TCP_PORT);
+
+        if (bind(sockfd, (struct sockaddr *)&serv_addr, sizeof(serv_addr))<0)
+        {
+            printf("server: can not bind local addr\n");
+            exit(2);
+        }
+
+        listen(sockfd, 5);
+        printf ("Servidor aguardando conexao\n");
+
+
+        clilen = sizeof(cli_addr);
+
+    while(1) { 
+        newsockfd = accept(sockfd, (struct sockaddr *) &cli_addr, &clilen);
+
+        if( newsockfd < 0)
+        {
+        /*err_dump("server: accept error");*/
+        printf("server: accept error\n");
+        exit(3);
+        }
+        
+        clients[cur_pos] = newsockfd;
+
+        cur_pos++;
+
+        IP = inet_ntoa(cli_addr.sin_addr);
+        printf("Cliente conectado --> IP: %s\n",IP);
+
+        int result;
+        
+	    result = pthread_create(&trd_1, NULL, readClientSocket, &newsockfd);
+
+
+        
+    }
+
+//    Return(0);
+}
