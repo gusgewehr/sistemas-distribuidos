@@ -27,35 +27,45 @@ char sendline[MAXLINE];
 pthread_t trd_1;
 
 
-digitaAlgo(int sockfd) {
-   int  n;
-   printf("Digite algo...\n");
-   while (fgets(sendline, MAXLINE, stdin) != NULL) {
-     n = strlen(sendline);
-     puts(sendline);
-     printf("\nEnviando para servidor ...");
-     if(write(sockfd, sendline, n) != n) {
-       printf("str_cli: writen error or socket\n");
-       exit(3);
-     }
-   }
-}
-
+//Função para depois criar uma thread q fica lendo o socket do servidor
 void *readClientSocket(void *newsockfd){
-    int teste = *((int *)newsockfd);
+  //transforma para ponteiro de int novamente
+    int *teste = (int *)newsockfd;
+  
+  //loop eterno
     while (1)
-    {
-        int n = read(teste, line, MAXLINE);
-        
-        printf("Recebi=%s\n",line);
-        bzero(line, sizeof(line));
+    { 
+      //lê o socket e retorna uma string
+        int n = read(*teste, line, MAXLINE);
+      //se tiver recebido algo
+        if( n > 0){
+          //imprime na tela a mensagem
+          printf("%s\n",line);
+          //limpa a variavel com a mensagem
+          bzero(line, sizeof(line));
+        }
         
     }
     
 
 }
 
+//Função para receber um input do usuário e enviar para o socket do servidor
+void digitaAlgo(int sockfd) {
+   int  n;
 
+   //Espera o input do usuário, quando ele apertar enter entra no loop
+   printf("Você diz: ");
+   while (fgets(sendline, MAXLINE, stdin) != NULL) {   
+     n = strlen(sendline);
+     //puts(sendline);
+     
+     if(write(sockfd, sendline, n) != n) {
+       printf("str_cli: writen error or socket\n");
+       exit(3);
+     }
+   }
+}
 
 int main(argc, argv)
     int argc; char *argv[];
@@ -93,15 +103,7 @@ int main(argc, argv)
     }
   printf("\nOK!\n");
 
-  int result;
-  struct sockaddr_in  cli_addr;
-
-  int clilen = sizeof(cli_addr);
-
-  int newsockfd = accept(sockfd, (struct sockaddr *) &cli_addr, &clilen);
-
-  result = pthread_create(&trd_1, NULL, readClientSocket, &newsockfd);
-
+  pthread_create(&trd_1, NULL, readClientSocket, (void *)&sockfd);
 
   digitaAlgo(sockfd);
   close(sockfd);

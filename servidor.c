@@ -17,13 +17,19 @@
 #define MAXLINE 512
 
 char line[MAXLINE];
-char *IP;
+char *IP, *gimmic = " diz: ";
+
+struct clientStruct{
+    int client;
+    char *ip;
+};  
 
 pthread_t trd_1;
 
 char sendline[MAXLINE];
 
-int clients[100], cur_pos = 0;
+struct clientStruct clients[100];
+int cur_pos = 0;
 
 void *readClientSocket(void *newsockfd){
     int teste = *((int *)newsockfd);
@@ -33,13 +39,16 @@ void *readClientSocket(void *newsockfd){
         if (n == 0) exit(3);                     /* connection terminated */
         else if (n < 0)
         printf("str_echo: read err\n");
-        printf("Recebi=%s\n",line);
-        bzero(line, sizeof(line));
+        //printf("Recebi=%s\n",line);
+        
 
         for(int i = 0; i < cur_pos; i++ ){
-        
-            write(clients[i], line, strlen(line));
+            
+            write(clients[i].client, clients[i].ip, 9);
+            write(clients[i].client, gimmic, 6);
+            write(clients[i].client, line, strlen(line));
         }
+        bzero(line, sizeof(line));
     }
     
 
@@ -93,12 +102,15 @@ int main(int argc, char *argv[]) {
         exit(3);
         }
         
-        clients[cur_pos] = newsockfd;
-
-        cur_pos++;
-
         IP = inet_ntoa(cli_addr.sin_addr);
         printf("Cliente conectado --> IP: %s\n",IP);
+
+
+        //Adiciona as informações do client no array do struct clientStruct
+        clients[cur_pos].client = newsockfd;
+        clients[cur_pos].ip = IP;
+
+        cur_pos++;
 
         int result;
         
