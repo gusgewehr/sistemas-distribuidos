@@ -17,46 +17,56 @@
 #define MAXLINE 512
 
 char line[MAXLINE];
+//a variável gimmic serve só para armazenar esse texto
 char *IP, *gimmic = " diz: ";
 
+//cria um struct para salvar o ip e o socket do cliente juntos
 struct clientStruct{
     int client;
     char *ip;
-};  
+};
 
+char *originalPoster = "";
+
+// cria uma variável para as threads
 pthread_t trd_1;
 
 char sendline[MAXLINE];
 
+// cria um array pra manter os clientes
 struct clientStruct clients[100];
+//cria uma variável para saber a quantidade de clientes conectados
 int cur_pos = 0;
 
+// função que é usado para criar uma thread para cada cliente que se conectar para ler o que ele está enviando
 void *readClientSocket(void *newsockfd){
+    // pega o valor int do ponteiro
     int teste = *((int *)newsockfd);
+    // laço infinito pra ficar lendo o que o cliente mandar
     while (1)
-    {
+    {   
+        // le o socket do cliente
         int n = read(teste, line, MAXLINE);
-        if (n == 0) exit(3);                     /* connection terminated */
+        if (n == 0) exit(3);                   /* connection terminated */
         else if (n < 0)
         printf("str_echo: read err\n");
-        //printf("Recebi=%s\n",line);
-        
 
-        for(int i = 0; i < cur_pos; i++ ){
-            
-            write(clients[i].client, clients[i].ip, 9);
+        for(int i = 0; i < cur_pos; i++ && sockfd == clients[i].client){
+            originalPoster = clients[i].ip;
+        }
+        
+        // laço para enviar a mensagem recebida para os demais clientes conectados
+        for(int i = 0; i < cur_pos; i++ && sockfd != clients[i].client){
+            //envia para o client o ip originario da mensagem
+            write(clients[i].client, originalPoster, 9);
+            // escreve a variavel gimmic
             write(clients[i].client, gimmic, 6);
+            // envia para o client a mensagem recebida
             write(clients[i].client, line, strlen(line));
         }
+        // esvazia a variável lida
         bzero(line, sizeof(line));
     }
-    
-
-}
-
-void sendClientSocket(char send){
-    int n;
-    
     
 
 }
@@ -92,6 +102,7 @@ int main(int argc, char *argv[]) {
 
         clilen = sizeof(cli_addr);
 
+    // looping infinito para ficar escutando se algum cliente se conectar
     while(1) { 
         newsockfd = accept(sockfd, (struct sockaddr *) &cli_addr, &clilen);
 
@@ -110,10 +121,12 @@ int main(int argc, char *argv[]) {
         clients[cur_pos].client = newsockfd;
         clients[cur_pos].ip = IP;
 
+        // incrementa 1 na quantidade de clientes conectados
         cur_pos++;
 
         int result;
         
+        //cria uma thread com a função de ler o socket do cliente referente aquela iteração do laço
 	    result = pthread_create(&trd_1, NULL, readClientSocket, &newsockfd);
 
 

@@ -24,11 +24,12 @@ char line[MAXLINE];
 
 char sendline[MAXLINE];
 
+//cria uma variável para thread
 pthread_t trd_1;
 
 
 //Função para depois criar uma thread q fica lendo o socket do servidor
-void *readClientSocket(void *newsockfd){
+void *readServerSocket(void *newsockfd){
   //transforma para ponteiro de int novamente
     int *teste = (int *)newsockfd;
   
@@ -58,8 +59,8 @@ void digitaAlgo(int sockfd) {
    printf("Você diz: ");
    while (fgets(sendline, MAXLINE, stdin) != NULL) {   
      n = strlen(sendline);
-     //puts(sendline);
-     
+
+      //envia a mensagem para o socket, se não mostra erro    
      if(write(sockfd, sendline, n) != n) {
        printf("str_cli: writen error or socket\n");
        exit(3);
@@ -70,18 +71,21 @@ void digitaAlgo(int sockfd) {
 int main(argc, argv)
     int argc; char *argv[];
 {
+  // declara as variáveis
   int                 sockfd;
   struct sockaddr_in  serv_addr;
   struct hostent      *hp;
   char                host[10];
   char SERVER_NAME[50];
-
+  // se não recebeu o nome do servidor no argumento ele se encerra
   if (argc < 2) {
      printf("Digite o nome do servidor!");
      exit(1);
   }
+  // copia o valor recebido no argumento pra variavel
   strcpy(SERVER_NAME, argv[1]);
 
+  //tenta conectar no servidor
   printf("Trying to connect to server %s ...\n", SERVER_NAME);
   hp= gethostbyname(SERVER_NAME);
   bzero((char *) &serv_addr, sizeof(serv_addr));
@@ -90,7 +94,7 @@ int main(argc, argv)
   serv_addr.sin_family         =AF_INET;
  /* serv_addr.sin_addr.s_addr  =inet_addr(SERV_HOST_ADDR); */
   serv_addr.sin_port           =htons(SERV_TCP_PORT);
-
+  
   if((sockfd = socket(AF_INET, SOCK_STREAM, 0)) < 0){
       printf("client: can not open stream socket\n");
       exit(1);
@@ -103,8 +107,13 @@ int main(argc, argv)
     }
   printf("\nOK!\n");
 
-  pthread_create(&trd_1, NULL, readClientSocket, (void *)&sockfd);
 
+  // cria a thread que irá ficar escutando o servidor
+  pthread_create(&trd_1, NULL, readServerSocket, (void *)&sockfd);
+
+  // chama a função que ficará lendo o input do usuário e enviando ao servidor
   digitaAlgo(sockfd);
+
+  // fecha conexão após rodar tudo (mas normalmente só acontece se houver um ctrl+C)
   close(sockfd);
 }
