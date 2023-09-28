@@ -41,12 +41,12 @@ int cur_pos = 0;
 // função que é usado para criar uma thread para cada cliente que se conectar para ler o que ele está enviando
 void *readClientSocket(void *newsockfd){
     // pega o valor int do ponteiro
-    int teste = *((int *)newsockfd);
+    int sockfd = *((int *)newsockfd);
     // laço infinito pra ficar lendo o que o cliente mandar
     while (1)
     {   
         // le o socket do cliente
-        int n = read(teste, line, MAXLINE);
+        int n = read(sockfd, line, MAXLINE);
         if (n == 0) exit(3);                   /* connection terminated */
         else if (n < 0)
         printf("str_echo: read err\n");
