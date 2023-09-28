@@ -50,7 +50,8 @@ void *readClientSocket(void *newsockfd){
         if (n == 0) exit(3);                   /* connection terminated */
         else if (n < 0)
         printf("str_echo: read err\n");
-
+        
+        // descobre qual cliente q mandou
         for(int i = 0; i < cur_pos; i++){
             if(sockfd == clients[i].client){
                 originalPoster = clients[i].ip;
