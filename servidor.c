@@ -51,18 +51,22 @@ void *readClientSocket(void *newsockfd){
         else if (n < 0)
         printf("str_echo: read err\n");
 
-        for(int i = 0; i < cur_pos; i++ && sockfd == clients[i].client){
-            originalPoster = clients[i].ip;
+        for(int i = 0; i < cur_pos; i++){
+            if(sockfd == clients[i].client){
+                originalPoster = clients[i].ip;
+            }
         }
         
         // laço para enviar a mensagem recebida para os demais clientes conectados
-        for(int i = 0; i < cur_pos; i++ && sockfd != clients[i].client){
-            //envia para o client o ip originario da mensagem
-            write(clients[i].client, originalPoster, 9);
-            // escreve a variavel gimmic
-            write(clients[i].client, gimmic, 6);
-            // envia para o client a mensagem recebida
-            write(clients[i].client, line, strlen(line));
+        for(int i = 0; i < cur_pos; i++ && ){
+            if(sockfd != clients[i].client){
+                //envia para o client o ip originario da mensagem
+                write(clients[i].client, originalPoster, 9);
+                // escreve a variavel gimmic
+                write(clients[i].client, gimmic, 6);
+                // envia para o client a mensagem recebida
+                write(clients[i].client, line, strlen(line));
+            }
         }
         // esvazia a variável lida
         bzero(line, sizeof(line));
