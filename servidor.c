@@ -59,7 +59,7 @@ void *readClientSocket(void *newsockfd){
         }
         
         // laço para enviar a mensagem recebida para os demais clientes conectados
-        for(int i = 0; i < cur_pos; i++ && ){
+        for(int i = 0; i < cur_pos; i++){
             if(sockfd != clients[i].client){
                 //envia para o client o ip originario da mensagem
                 write(clients[i].client, originalPoster, 9);
